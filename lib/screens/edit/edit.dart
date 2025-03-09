@@ -1,22 +1,30 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:task_list1/data/data.dart';
-import 'package:task_list1/data/repo/repository.dart';
+
 import 'package:task_list1/main.dart';
+import 'package:task_list1/screens/edit/cubit/edit_task_cubit.dart';
 
 class EditTaskScreen extends StatefulWidget {
-  final TaskEntity task;
-
-  EditTaskScreen({super.key, required this.task});
+  const EditTaskScreen({
+    super.key,
+  });
 
   @override
   State<EditTaskScreen> createState() => _EditTaskScreenState();
 }
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.task.name);
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    _controller = TextEditingController(
+        text: context.read<EdittaskCubit>().state.task.name);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +39,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            widget.task.name = _controller.text;
-            widget.task.priority = widget.task.priority;
-            final repository= Provider.of<Repository<TaskEntity>>(context, listen: false);
-            repository.createOrUpdate(widget.task); 
+            context.read<EdittaskCubit>().onSaveChangesClick();
 
             Navigator.of(context).pop();
           },
@@ -48,55 +53,59 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Flex(
-              direction: Axis.horizontal,
-              children: [
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.high;
-                        });
-                      },
-                      label: 'High',
-                      color: highPriority,
-                      isSelected: widget.task.priority == Priority.high,
-                    )),
-                SizedBox(width: 8),
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.normal;
-                        });
-                      },
-                      label: 'Normal',
-                      color: normalPriority,
-                      isSelected: widget.task.priority == Priority.normal,
-                    )),
-                SizedBox(width: 8),
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.low;
-                        });
-                      },
-                      label: 'Low',
-                      color: lowPriority,
-                      isSelected: widget.task.priority == Priority.low,
-                    )),
-              ],
+            BlocBuilder<EdittaskCubit, EdittaskState>(
+              builder: ((context, state) {
+                final priority = state.task.priority;
+                return Flex(
+                  direction: Axis.horizontal,
+                  children: [
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EdittaskCubit>()
+                                .onPriorityChanged(Priority.high);
+                          },
+                          label: 'High',
+                          color: highPriority,
+                          isSelected: priority == Priority.high,
+                        )),
+                    SizedBox(width: 8),
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EdittaskCubit>()
+                                .onPriorityChanged(Priority.normal);
+                          },
+                          label: 'Normal',
+                          color: normalPriority,
+                          isSelected: priority == Priority.normal,
+                        )),
+                    SizedBox(width: 8),
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EdittaskCubit>()
+                                .onPriorityChanged(Priority.low);
+                          },
+                          label: 'Low',
+                          color: lowPriority,
+                          isSelected: priority == Priority.low,
+                        )),
+                  ],
+                );
+              }),
             ),
             TextField(
               controller: _controller,
-              decoration: InputDecoration(
-                  label: Text('Add a task for today...',
-                      style: themeData.textTheme.bodySmall!
-                          .apply(fontSizeFactor: 1.2))),
+              onChanged: (value) {
+                context.read<EdittaskCubit>().onTextChanged(value);
+              },
             )
           ],
         ),
@@ -119,7 +128,7 @@ class PriorityCheckBox extends StatelessWidget {
       required this.onTap});
   @override
   Widget build(BuildContext context) {
-    final ThemeData themeData = Theme.of(context);
+   
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -127,6 +136,7 @@ class PriorityCheckBox extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
           border:
+              // ignore: deprecated_member_use
               Border.all(width: 2, color: secondryTextColor.withOpacity(0.2)),
         ),
         child: Stack(
@@ -155,7 +165,7 @@ class _CheckBoxShape extends StatelessWidget {
   final bool value;
   final Color color;
 
-  const _CheckBoxShape({super.key, required this.value, required this.color});
+  const _CheckBoxShape({required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

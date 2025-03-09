@@ -66,9 +66,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.light(
           primary: primaryColor,
           primaryFixed: primaryFixedColor,
+          // ignore: deprecated_member_use
           background: Color(0xffF3F5F8),
           onSurface: primaryTextColor,
           onPrimary: Colors.white,
+          // ignore: deprecated_member_use
           onBackground: primaryTextColor,
           secondary: primaryColor,
           onSecondary: Colors.white,

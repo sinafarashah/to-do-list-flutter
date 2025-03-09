@@ -8,8 +8,8 @@ class HiveTaskDtatSource implements DataSource<TaskEntity> {
   HiveTaskDtatSource(this.box);
 
   @override
-  Future<TaskEntity> createOrUpdate(TaskEntity data)async {
-   if (data.isInBox) {
+  Future<TaskEntity> createOrUpdate(TaskEntity data) async {
+    if (data.isInBox) {
       data.save();
     } else {
       data.id = await box.add(data);
@@ -18,7 +18,7 @@ class HiveTaskDtatSource implements DataSource<TaskEntity> {
   }
 
   @override
-  Future<void> delete(TaskEntity data)async {
+  Future<void> delete(TaskEntity data) async {
     return data.delete();
   }
 
@@ -33,13 +33,18 @@ class HiveTaskDtatSource implements DataSource<TaskEntity> {
   }
 
   @override
-  Future<TaskEntity> findById(id)async {
+  Future<TaskEntity> findById(id) async {
     return box.values.firstWhere((element) => element.id == id);
   }
 
   @override
-  Future<List<TaskEntity>> getAll({String searchKeyword=''})async {
-    return box.values.toList();
+  Future<List<TaskEntity>> getAll({String searchKeyword = ''}) async {
+    if (searchKeyword.isNotEmpty) {
+      return box.values
+          .where((task) => task.name.contains(searchKeyword))
+          .toList();
+    } else {
+      return box.values.toList();
+    }
   }
-
 }
